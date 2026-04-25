@@ -1,42 +1,274 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>汉语冒险游戏</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>汉语冒险 · 第一日（作品版）</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI";
+  color: white;
+  background: black;
+  overflow: hidden;
+}
+
+/* 🎬 场景 */
+.scene {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: 1s;
+  z-index: -2;
+}
+
+/* 🌫 遮罩 */
+.overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+}
+
+/* 🎭 角色 */
+.character {
+  position: absolute;
+  bottom: 0;
+  width: 35%;
+  transition: 0.5s;
+  opacity: 0;
+}
+
+.left { left: 5%; }
+.right { right: 5%; }
+
+.show { opacity: 1; transform: translateY(0); }
+
+/* 💬 对话框 */
+.dialogue-box {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+}
+
+.name {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.text {
+  font-size: 18px;
+}
+
+/* 🎮 选项 */
+.choices {
+  margin-top: 15px;
+}
+
+.choice {
+  background: rgba(255,255,255,0.2);
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.choice:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+/* 📊 HUD */
+.hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+.bar {
+  width: 120px;
+  height: 6px;
+  background: rgba(255,255,255,0.2);
+  margin-bottom: 5px;
+}
+
+.fill {
+  height: 100%;
+  background: #00ffd5;
+  width: 10%;
+  transition: 0.5s;
+}
+
+/* 🎬 开场 */
+#intro {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+}
+</style>
 </head>
 
 <body>
 
-<!-- 主界面 -->
-<div id="home" class="screen active">
-  <h1>🎮 汉语冒险</h1>
-  <div class="btn" onclick="showMap()">开始游戏</div>
+<div id="intro">第一天，你一个人在中国…</div>
+
+<div id="scene" class="scene"></div>
+<div class="overlay"></div>
+
+<img id="charL" class="character left">
+<img id="charR" class="character right">
+
+<div class="hud">
+  XP<div class="bar"><div id="xp" class="fill"></div></div>
+  好感<div class="bar"><div id="aff" class="fill"></div></div>
 </div>
 
-<!-- 地图 -->
-<div id="map" class="screen">
-  <h2>选择场景</h2>
-  <div id="levelList"></div>
+<div class="dialogue-box">
+  <div id="name" class="name"></div>
+  <div id="text" class="text"></div>
+  <div id="choices" class="choices"></div>
 </div>
 
-<!-- 游戏界面 -->
-<div id="game" class="screen">
-  <h3 id="levelTitle"></h3>
+<script>
 
-  <div id="xpContainer">
-    XP:
-    <div id="xpBar"></div>
-  </div>
+/* 状态 */
+let xp = 0;
+let aff = 0;
+let node = "start";
 
-  <p id="question"></p>
-  <div id="choices"></div>
+/* 🎭 剧情树（扩展版🔥） */
+const story = {
+  start: {
+    bg: "https://picsum.photos/800/600?restaurant",
+    left: "https://i.imgur.com/6X4bZQK.png",
+    name: "服务员",
+    text: "欢迎光临，你要吃什么？",
+    choices: [
+      { text: "我要米饭", next: "good", xp: 10, aff: 5 },
+      { text: "我吃水", next: "bad", xp: 0, aff: -5 }
+    ]
+  },
 
-  <p id="feedback"></p>
-</div>
+  good: {
+    text: "好的，请稍等。",
+    choices: [
+      { text: "谢谢", next: "good2", xp: 5, aff: 5 }
+    ]
+  },
 
-<script src="data.js"></script>
-<script src="game.js"></script>
+  bad: {
+    text: "嗯？你是说喝水吗？",
+    choices: [
+      { text: "对，我要水", next: "recover", xp: 5, aff: 2 }
+    ]
+  },
+
+  recover: {
+    text: "好的，下次注意用“喝”。",
+    choices: [
+      { text: "谢谢提醒", next: "good2", xp: 5, aff: 5 }
+    ]
+  },
+
+  good2: {
+    text: "你的中文越来越好了！",
+    choices: [
+      { text: "继续交流", next: "end" }
+    ]
+  },
+
+  end: {
+    text: "",
+    choices: []
+  }
+};
+
+/* 打字机 */
+function type(text) {
+  let el = document.getElementById("text");
+  el.innerHTML = "";
+  let i = 0;
+  function t() {
+    if (i < text.length) {
+      el.innerHTML += text[i++];
+      setTimeout(t, 25);
+    }
+  }
+  t();
+}
+
+/* 更新 */
+function update() {
+  document.getElementById("xp").style.width = xp + "%";
+  document.getElementById("aff").style.width = (aff+50) + "%";
+}
+
+/* 渲染 */
+function render() {
+  let s = story[node];
+
+  if (node === "end") return ending();
+
+  if (s.bg) document.getElementById("scene").style.backgroundImage = `url(${s.bg})`;
+
+  if (s.left) {
+    let c = document.getElementById("charL");
+    c.src = s.left;
+    c.classList.add("show");
+  }
+
+  document.getElementById("name").innerText = s.name || "";
+  type(s.text);
+
+  let div = document.getElementById("choices");
+  div.innerHTML = "";
+
+  s.choices.forEach(c => {
+    let btn = document.createElement("div");
+    btn.className = "choice";
+    btn.innerText = c.text;
+
+    btn.onclick = () => {
+      xp += c.xp || 0;
+      aff += c.aff || 0;
+      node = c.next;
+      update();
+      render();
+    };
+
+    div.appendChild(btn);
+  });
+}
+
+/* 结局 */
+function ending() {
+  let result = "";
+
+  if (aff > 10) result = "🎉 你已经可以自信地用中文交流！";
+  else if (aff > 0) result = "🙂 你还在适应，但越来越好了。";
+  else result = "😅 今天有点尴尬，但这是成长的一部分。";
+
+  document.getElementById("name").innerText = "";
+  type(result);
+  document.getElementById("choices").innerHTML = "";
+}
+
+/* 开场 */
+setTimeout(()=>{
+  document.getElementById("intro").style.display = "none";
+  render();
+},2000);
+
+</script>
 
 </body>
 </html>
