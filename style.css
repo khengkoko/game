@@ -1,0 +1,62 @@
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(to right, #74ebd5, #acb6e5);
+  text-align: center;
+  color: #333;
+}
+
+/* 页面切换 */
+.screen {
+  display: none;
+}
+
+.active {
+  display: block;
+}
+
+/* 按钮 */
+.btn {
+  margin: 10px;
+  padding: 15px;
+  background: #4CAF50;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn:hover {
+  transform: scale(1.05);
+}
+
+/* XP条 */
+#xpBar {
+  height: 20px;
+  background: green;
+  width: 0%;
+  transition: 0.5s;
+}
+
+/* 正确动画 */
+.correct {
+  animation: flash 0.5s;
+}
+
+@keyframes flash {
+  0% { background: #d4ffd4; }
+  100% { background: none; }
+}
+
+/* 错误动画 */
+.shake {
+  animation: shake 0.3s;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
